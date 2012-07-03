@@ -1,22 +1,22 @@
 module Statistics where
 
 import System.Random
-import Data.Time.Clock
 import Graphics.UI.WX
 
-mkRands k= randomRs (0.0,1.0)$mkStdGen k--乱数リスト
+mkRands k = randomRs (0.0,1.0) $ mkStdGen k --乱数リスト
 
-timeToInt :: DiffTime -> Int
-timeToInt = floor.read.init.show
+simulateProb :: Int -> [Double] ->[Double] -> String
+simulateProb n rs1 rs2 = "hello,world"
+ -- = mkNormalRands $ zip rs1 rs2
 
---事象数を受け取り、算出したχ^2分布をファイルに書き出す
-simulateF :: Window a -> Int -> IO()
-simulateF form n = do
-    t <- (getCurrentTime >>= return.utctDayTime)
---    let xs = mkRands $ timeToInt t
-    file <- fileSaveDialog form True True "save data" [("data",["*.data"])] "" ""
-    case file of
-        Just filename -> writeFile filename ""
-        Nothing       -> return()
+--正規乱数リストを生成
+mkNormalRands :: [(Double,Double)] -> [Double]
+mkNormalRands = foldl mkNormalRands' []
 
+mkNormalRands' xs r = nr1:nr2:xs where
+    (nr1,nr2) = boxMuller r
 
+--Box-Muller法を用いてN(0,1)正規乱数を生成する
+boxMuller :: (Double,Double) -> (Double,Double)
+boxMuller (a,b) = (sqrt a' * sin b' , sqrt a'*sin b') where
+    (a',b') = (-2*log a , 2*pi*b)

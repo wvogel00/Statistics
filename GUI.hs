@@ -1,8 +1,9 @@
 import Graphics.UI.WX
 import qualified Graphics.Gloss as G
 import Statistics
+import Data.Time.Clock
 
-(width,height) = (600,50)
+(width,height) = (600,30)
 
 main = start mainGUI
 
@@ -12,18 +13,17 @@ mainGUI = do
   p <- panel f []
   textBoxN <- textEntry p [text := "1000" , alignment := AlignRight]
   textBoxFile <- textEntry p [text := ""  , alignment := AlignRight]
-  draw <- button f [ text := "draw gragh"
+  draw <- button p [ text := "draw gragh"
                     ,on command := drawMode f 
-                    ,clientSize := sz 80 30]
-  siml <- button f [ text := "simulate"
+                    ,clientSize := sz 100 height]
+  siml <- button p [ text := "simulate"
                     ,on command := simulateF f 1000
-                    ,clientSize := sz 80 30]
-  set f [ layout := margin 4 $ container p $ floatCenter $
-            row 5 [ minsize (sz 60 30) $ widget textBoxN
-                   ,minsize (sz 100 30) $ widget textBoxFile
-                   ,widget siml
-                   ,widget draw
-                   ]
+                    ,clientSize := sz 80 height]
+  set p [ layout := (column 1 [
+                      row 4 [ minsize (sz 100 height) $ widget textBoxN
+                             ,fill $ widget textBoxFile
+                             ,widget draw , widget siml] ] ) ]
+  set f [ layout := (fill $ widget p)
          ,clientSize := sz width height]
 
 --描画モード
@@ -38,6 +38,21 @@ drawMode f= do
 choseFile :: Window a -> IO (Maybe FilePath)
 choseFile f = fileOpenDialog f True True "Open data file"
                     [("Any File",["*.*"]),("plot data",["*.data"])] "" ""
+--事象数を受け取り、算出したχ^2分布をファイルに書き出す
+simulateF :: Window a -> Int -> IO()
+simulateF form n = do
+    t <- (getCurrentTime >>= return.utctDayTime)
+    file <- fileSaveDialog form True True "save data" [("data",["*.data"])] "" ""
+    case file of
+        Just filename -> writeFile filename $ callSimulate n t
+        Nothing       -> return()
+
+timeToInt :: DiffTime -> Int
+timeToInt = floor.read.init.show
+
+callSimulate n time = simulateProb n rs1 rs2 where
+    rs1 = mkRands.timeToInt $ time
+    rs2 = mkRands.timeToInt $ time + 1
 
 --点をplot(with Gloss)
 drawData :: FilePath -> IO()
