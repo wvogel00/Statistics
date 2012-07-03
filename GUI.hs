@@ -3,27 +3,33 @@ import qualified Graphics.Gloss as G
 import Statistics
 import Data.Time.Clock
 
-(width,height) = (600,30)
+(width,height) = (600,60)
 
 main = start mainGUI
 
+--UI
+--サンプル数（事象数）、試行数、データ保存、グラフ描画
 mainGUI :: IO()
 mainGUI = do
   f <- frame [text := "statistics"]
   p <- panel f []
   textBoxN <- textEntry p [text := "1000" , alignment := AlignRight]
+  textBoxR <- textEntry p [text :=  "500" , alignment := AlignRight]
   textBoxFile <- textEntry p [text := ""  , alignment := AlignRight]
   draw <- button p [ text := "draw gragh"
                     ,on command := drawMode f 
-                    ,clientSize := sz 100 height]
+                    ,clientSize := sz 100 30]
   siml <- button p [ text := "simulate"
                     ,on command := simulateF f 1000
-                    ,clientSize := sz 80 height]
-  set p [ layout := (column 1 [
-                      row 4 [ minsize (sz 100 height) $ widget textBoxN
-                             ,fill $ widget textBoxFile
-                             ,widget draw , widget siml] ] ) ]
-  set f [ layout := (fill $ widget p)
+                    ,clientSize := sz 80 30]
+  set p [ layout := (column 2 [
+                       row 2 [ minsize (sz 100 25) $ label "事象数"
+                              ,minsize (sz 100 25) $ label "試行回数"]
+                      ,row 5 [ minsize (sz 100 25) $ widget textBoxN
+                              ,minsize (sz 100 25) $ widget textBoxR
+                              ,fill $ widget textBoxFile
+                              ,widget draw , widget siml] ] )]
+  set f [ layout := fill $ widget p
          ,clientSize := sz width height]
 
 --描画モード
