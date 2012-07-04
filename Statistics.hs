@@ -3,7 +3,8 @@ module Statistics where
 import System.Random
 import Graphics.UI.WX
 
-mkRands k = randomRs (0.0,1.0) $ mkStdGen k --乱数リスト
+--乱数リスト
+mkRands k = randomRs (0.0,1.0) $ mkStdGen k
 
 simulateProb :: Int -> [Float] ->[Float] -> String
 simulateProb n rs1 rs2 = "hello,world"
@@ -28,7 +29,20 @@ boxMuller :: (Float,Float) -> (Float,Float)
 boxMuller (a,b) = (sqrt a' * sin b' , sqrt a'*sin b') where
     (a',b') = (-2*log a , 2*pi*b)
 
-actuallyChiSquare :: Int -> [(Float,Float)]
-actuallyChiSquare n = take n $ zip xs ys where
- xs = [-1.0,-0.999..1.0]
- ys = repeat 1.0
+--χ二乗値、確率密度を式にそって計算
+actuallyChiSquare :: Int -> [Float] -> (Float,Float)
+actuallyChiSquare n rs = (x,y) where
+ x = chiFunc $ take n rs
+ y = probDensity 2 x
+
+--N(0,1)のχ二乗値を計算
+chiFunc :: [Float] -> Float
+chiFunc = sum . map (^2)
+
+--自由度とカイ二乗値から確率密度を計算
+probDensity :: Int -> Float -> Float
+probDensity k x = sqrt (1/2)/gammaF (fromIntegral k/2) * 1/sqrt x * exp(-x/2)
+
+--ガンマ関数
+gammaF :: Float -> Float
+gammaF z = sum $ map (\t -> 1/sqrt z*exp (-t)) [0.5,1..1000]
