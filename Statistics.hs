@@ -49,12 +49,17 @@ gammaF :: Float -> Float
 gammaF z = sum $ map (\t -> 1/sqrt z*exp (-t)) [0.5,1..1000]
 
  --正規乱数を事象に分ける
+ --階級数と分散を受け取る
  --その際、上下3σ内でカットした上で10rankに分割していく。
-dividePhenom :: Float -> [Float] -> [[Float]]
-dividePhenom sig = snd.unzip.foldl divide (zip ranks $ repeat [0]) where
+dividePhenom :: Int -> Float -> [Float] -> [[Float]]
+dividePhenom n sig = snd.unzip.foldl divide (zip ranks $ repeat [0]) where
     maxRange = 3*sig
-    ranges = iterate (+maxRange/5)  $ negate maxRange
-    ranks = take 10 $ zip ranges $ tail ranges
+    ranges = iterate (+maxRange/(fromIntegral $ div n 2))  $ negate maxRange
+    ranks = take n $ zip ranges $ tail ranges
     inRank (s,e) v = s <= v && v <= e
-    divide ls r = if abs r > 3*sig then ls else map (divide' r) ls
+    divide ls r = if abs r > maxRange then ls else map (divide' r) ls
     divide' r d@(range,s) = if inRank range r then (range,r:s) else d
+
+--階級数と分散を受け取り、各階級における度数と下側確率を計算
+calcFrecency :: Int -> Float -> [Float] -> [Float]
+calcFrecuency n sig = map length.dividePhenom
