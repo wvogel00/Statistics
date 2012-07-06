@@ -61,5 +61,5 @@ dividePhenom n sig = snd.unzip.foldl divide (zip ranks $ repeat [0]) where
     divide' r d@(range,s) = if inRank range r then (range,r:s) else d
 
 --階級数と分散を受け取り、各階級における度数と下側確率を計算
-calcFrecency :: Int -> Float -> [Float] -> [Float]
-calcFrecuency n sig = map length.dividePhenom
+calcFrecuency :: Int -> Float -> [Float] -> [Int]
+calcFrecuency n sig = map length . dividePhenom n sig
