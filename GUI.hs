@@ -1,3 +1,4 @@
+import Graphics.Gnuplot.Simple
 import Graphics.UI.WX
 import qualified Graphics.Gloss as G
 import Statistics
@@ -17,7 +18,7 @@ mainGUI = do
   textBoxR <- textEntry p [text :=  "500" , alignment := AlignRight]
   textBoxFile <- textEntry p [text := ""  , alignment := AlignRight]
   draw <- button p [ text := "draw gragh"
-                    ,on command := drawMode f 
+                    ,on command := drawMode f
                     ,clientSize := sz 100 25]
   siml <- button p [ text := "simulate"
                     ,on command := simulateF f 1000
