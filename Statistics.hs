@@ -21,14 +21,11 @@ unFormat = map ((\[x,y] -> (read x,read y)) . words) . lines
 
 --正規乱数リストを生成
 mkNormalRands :: [(Float,Float)] -> [Float]
-mkNormalRands = foldl mkNormalRands' []
-mkNormalRands' xs r = nr1:nr2:xs where
-    (nr1,nr2) = boxMuller r
+mkNormalRands = map boxMuller
 
 --Box-Muller法を用いてN(0,1)正規乱数を生成する
-boxMuller :: (Float,Float) -> (Float,Float)
-boxMuller (a,b) = (sqrt a' * sin b' , sqrt a'*sin b') where
-    (a',b') = (-2*log a , 2*pi*b)
+boxMuller :: (Float,Float) -> Float
+boxMuller (a,b) = sqrt (-2*log a) * sin (2*pi*b)
 
 --χ二乗値、確率密度を式にそって計算
 actuallyChiSquare :: Int -> [Float] -> (Float,Float)
