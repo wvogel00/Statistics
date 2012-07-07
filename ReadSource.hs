@@ -9,6 +9,12 @@ run p input = case (parse p "" input) of
     Right xs -> return $ map length xs
 
 start :: Parser [String]
-start = return ["test"]
+start = do
+    (comment >> start) <|> return ["test"]
+
+comment :: Parser ()
+comment = (skipLine <|> skipLines ) >> return () where
+    skipLine = string "--" >> skipMany1 digit >> string "\n"
+    skipLines = string "{-" >> skipMany1 digit >> string "-}"
 
 getLengthList str = return $ run start
