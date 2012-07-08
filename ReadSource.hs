@@ -1,4 +1,4 @@
-module ReadSource where
+module ReadSource (run,startRead) where
 
 import Control.Applicative hiding ( (<|>) , many )
 import Text.Parsec
@@ -9,10 +9,10 @@ run p input = case (parse p "" input) of
     Left err -> print err >> return []
     Right xs -> return $ map length xs
 
-start :: Parser [String]
-start = do
+startRead :: Parser [String]
+startRead = do
     x <- word
-    xs <- (commentOrSpace *> start) <|> return []
+    xs <- (commentOrSpace *> startRead) <|> return []
     case x of
         Just a -> return $ a:xs
         Nothing -> return xs
@@ -50,5 +50,3 @@ commentOrSpace = (try space <|> try literals <|>
     charL = char '\'' *> anyChar *> char '\''
 
 efficients = ['a'..'z']++['A'..'Z']++concat (map show [0..9]) :: String
-
-getLengthList str = return $ run start
