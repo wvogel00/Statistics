@@ -1,51 +1,62 @@
+import System.IO (readFile)
 import Graphics.Gnuplot.Simple
 import Graphics.UI.WX
 import Graphics.UI.WXCore (bitmapGetSize)
-import Statistics
 import Data.Time.Clock
 import Control.Monad
-
-(width,height) = (600,60)
+import ReadSource
+import Statistics
 
 main = start mainGUI
 
 --UI
---サンプル数（事象数）、試行数、データ保存、グラフ描画
 mainGUI :: IO()
 mainGUI = do
   f <- frame [text := "statistics"]
   p <- panel f []
   txtN <- textEntry p [text := "1000" , alignment := AlignRight]
   txtR <- textEntry p [text :=  "500" , alignment := AlignRight]
-  txtFile <- textEntry p [text := ""  , alignment := AlignRight]
+  txtA <- textEntry p [text := "0.005"  , alignment := AlignRight]
   draw <- button p [ text := "draw gragh"
                     ,on command := drawMode f
-                    ,clientSize := sz 100 25]
-  siml <- button p [ text := "simulate"
+                    ,clientSize := sz 100 32]
+  sim1 <- button p [ text := "simulate"
                     ,on command := simulateF f txtN txtR
-                    ,clientSize := sz 80 25]
-  set p [ layout := (column 2 [
-                       row 2 [ minsize (sz 100 25) $ label "事象数"
-                              ,minsize (sz 100 25) $ label "試行回数"]
-                      ,row 5 [ minsize (sz 100 25) $ widget txtN
-                              ,minsize (sz 100 25) $ widget txtR
-                              ,minsize (sz 140 25)$ widget txtFile
-                              ,widget draw , widget siml] ] )]
+                    ,clientSize := sz 100 32]
+  sim2 <- button p [ text := "from .hs file"
+                    ,on command := getFromFile f txtA
+                    ,clientSize := sz 100 32]
+  set p [layout := (column 2 [
+                     row 3 [ minsize (sz 100 32) $ label "事象数"
+                            ,minsize (sz 100 32) $ label "試行回数"
+                            ,minsize (sz 100 32) $ label "有意水準"]
+                    ,row 6 [ minsize (sz 100 32) $ widget txtN
+                            ,minsize (sz 100 32) $ widget txtR
+                            ,minsize (sz 100 32) $ widget txtA
+                            ,widget draw , widget sim1 , widget sim2]])]
   set f [ layout := fill $ widget p
-         ,clientSize := sz width height]
+         ,clientSize := sz 650 70]
+
+--ソースコードから単語帳を取得
+getFromFile :: Window a -> TextCtrl () -> IO()
+getFromFile f txt = do
+    a <- get txt text
+    file <- choseFile f ".hsファイルを選択" "haskell" ["*.hs","*.lhs"]
+    case file of
+        Nothing -> infoDialog f "ERROR" "ファイルを選択してください"
+        Just path -> readFile path >>= run startRead >> return ()
 
 --描画モード
 drawMode :: Window a ->  IO ()
 drawMode f = do
-  filename <- choseFile f
+  filename <- choseFile f "描画元ファイルを選択" "data plot" ["*.data"]
   case filename of
     Just file -> drawData file
-    Nothing   -> infoDialog f "ERROR" $ "NO FILE CHOSEN!"
+    Nothing   -> infoDialog f "ERROR" "NO FILE CHOSEN!"
 
 --ファイル選択
-choseFile :: Window a -> IO (Maybe FilePath)
-choseFile f = fileOpenDialog f True True "Open data file"
-                    [("Any File",["*.*"]),("plot data",["*.data"])] "" ""
+choseFile :: Window a -> String -> String -> [String] -> IO (Maybe FilePath)
+choseFile f str ftype ex = fileOpenDialog f True True str [(ftype,ex)] "" ""
 --事象数を受け取り、算出したχ^2分布をファイルに書き出す
 simulateF :: Window a  -> TextCtrl () -> TextCtrl () -> IO()
 simulateF f tN tR = do
