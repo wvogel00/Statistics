@@ -1,7 +1,6 @@
 module Statistics where
 
 import System.Random
-import Graphics.UI.WX
 import Data.List
 
 --乱数リスト
@@ -60,3 +59,20 @@ dividePhenom n sig = snd.unzip.foldl divide (zip ranks $ repeat [0]) where
 --階級数と分散を受け取り、各階級における度数と下側確率を計算
 calcFrecuency :: Int -> Float -> [Float] -> [Int]
 calcFrecuency n sig = map length . dividePhenom n sig
+
+--検定
+--優位水準と度数リストを受け取り、検定結果を返す
+assay :: Float -> [Float] -> (Bool,Float)
+assay a xs = (True,0) where
+    n = fromIntegral $ length xs
+    xs' = group $ sort xs :: [[Float]]
+    _X = sum (map _Xf xs') / n :: Float
+    _Xf :: [Float] -> Float
+    _Xf ss = sum ss/fromIntegral (length ss) * fromIntegral (length ss)
+    _V = (n*sum (map _Vf xs') - _X^2 ) / n^2
+    _Vf :: [Float] -> Float
+    _Vf ss = _Xf ss * sum ss/fromIntegral (length ss) :: Float
+    _Zi ss =( sum ss/fromIntegral (length ss)  - _Xf ss) / sqrt (_Vf ss)
+
+--帰無仮説採択or棄却
+isNorm a p = p > a
