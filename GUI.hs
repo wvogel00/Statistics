@@ -1,4 +1,4 @@
-import System.IO (readFile)
+import System.IO
 import Graphics.Gnuplot.Simple
 import Graphics.UI.WX
 import Graphics.UI.WXCore (bitmapGetSize)
@@ -14,7 +14,7 @@ mainGUI :: IO()
 mainGUI = do
   f <- frame [text := "statistics"]
   p <- panel f []
-  txtN <- textEntry p [text := "1000" , alignment := AlignRight]
+  txtN <- textEntry p [text := "10" , alignment := AlignRight]
   txtR <- textEntry p [text :=  "500" , alignment := AlignRight]
   txtA <- textEntry p [text := "0.005"  , alignment := AlignRight]
   draw <- button p [ text := "draw gragh"
@@ -65,21 +65,26 @@ simulateF f tN tR = do
     n  <- liftM read (get tN text) :: IO Int
     rn <- liftM read (get tR text) :: IO Int
     case file of
-        Just filename -> writeFile filename $ callSimulate n rn $ timeToInt t
-        Nothing       -> infoDialog f "事象数" $ show n -- "ERROR" "ファイル名を入力してください"
+        Just filename -> do
+                     h <- openFile filename WriteMode
+                     hPutStr h $ callSimulate n rn $ timeToInt t
+                     hClose h >> infoDialog f "complete" "完了しました"
+        Nothing -> infoDialog f "ERROR" "ファイル名を入力してください"
 
 timeToInt :: DiffTime -> Int
 timeToInt = floor.read.init.show
 
 callSimulate :: Int -> Int -> Int -> String
-callSimulate n rn time = simulateProb n rs1 rs2 where
+callSimulate n rn time = simulateProb (rn,rn) n (zip rs1 rs2) where
     rs1 = mkRands time
     rs2 = mkRands $ time + 1
 
 --点をplot(with Gloss)
 drawData :: FilePath -> IO()
 drawData file = do
-    readFile file >>= plotDots [PNG file'].unFormat
+    h <- openFile file ReadMode
+    hGetContents h >>= plotDots [PNG file' , XRange (0,40)].unFormat
+    hClose h
     bm <- bitmapCreateFromFile file'
     size <- bitmapGetSize bm
     f <- frame [text := file ,on paint := onPaint bm ,clientSize := size]
@@ -87,3 +92,14 @@ drawData file = do
     where
         file' = takeWhile (/= '.') file ++ ".png"
         onPaint bm dc viewArea = drawBitmap dc bm pointZero False []
+
+
+--座標データをファイルに書き出す時
+format :: [(Float,Float)] -> String
+format = concat.map (\(x,y)-> show x ++ "\t" ++ show y ++ "\n")
+
+unFormat' = map (\(x,y) -> (x,y+10)).unFormat
+
+--ファイルデータを座標データに変換するとき
+unFormat :: String -> [(Float,Float)]
+unFormat = map ((\[x,y] -> (read x,read y)).words). lines
