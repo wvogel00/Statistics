@@ -5,7 +5,8 @@ import Graphics.UI.WXCore (bitmapGetSize)
 import Data.Time.Clock
 import Control.Monad
 import ReadSource
-import Statistics
+--import Statistics
+import S2
 
 main = start mainGUI
 
@@ -62,8 +63,8 @@ simulateF :: Window a  -> TextCtrl () -> TextCtrl () -> IO()
 simulateF f tN tR = do
     file <- fileSaveDialog f True True "save data" [("data",["*.data"])] "" ""
     t  <- (getCurrentTime >>= return.utctDayTime)
-    n  <- liftM read (get tN text) :: IO Int
-    rn <- liftM read (get tR text) :: IO Int
+    n  <- liftM read (get tN text) :: IO Double
+    rn <- liftM read (get tR text) :: IO Double
     case file of
         Just filename -> do
                      h <- openFile filename WriteMode
@@ -74,8 +75,8 @@ simulateF f tN tR = do
 timeToInt :: DiffTime -> Int
 timeToInt = floor.read.init.show
 
-callSimulate :: Int -> Int -> Int -> String
-callSimulate n rn time = simulateProb (rn,rn) n (zip rs1 rs2) where
+callSimulate :: Double -> Double -> Int -> String
+callSimulate n rn time = simulate (rn,floor rn) n (zip rs1 rs2) where
     rs1 = mkRands time
     rs2 = mkRands $ time + 1
 
@@ -95,11 +96,11 @@ drawData file = do
 
 
 --座標データをファイルに書き出す時
-format :: [(Float,Float)] -> String
+format :: [(Double,Double)] -> String
 format = concat.map (\(x,y)-> show x ++ "\t" ++ show y ++ "\n")
 
 unFormat' = map (\(x,y) -> (x,y+10)).unFormat
 
 --ファイルデータを座標データに変換するとき
-unFormat :: String -> [(Float,Float)]
+unFormat :: String -> [(Double,Double)]
 unFormat = map ((\[x,y] -> (read x,read y)).words). lines
