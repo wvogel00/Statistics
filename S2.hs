@@ -29,20 +29,22 @@ simulate (n,k) rank rs'
     rs = take (floor n) $ mkNormalRands rs' --N(0,1)のリスト
     nextRs = zip (mkRands k) $ mkRands (k*2-1) --次の乱数リスト
     dataStr = toStr (toPos rank n x2) --データをStringに変換
-    x2 = xSquare rank n rs
+    x2 = xSquare rank n rs (avg,sig)
+    avg = sum rs/n
+    sig = (/n).sum $ map (\x -> (x-avg)^2) rs
 
 --rank個の事象に分割
-mkFrequency rank sig = map convert.foldl divide (zip ranks (repeat [])) where
+mkFrequency rank (avg,sig) = map convert.foldl divide (zip ranks (repeat [])) where
     ranks = take (floor $rank+0.5) $ zip ranks' $ tail ranks'
-    ranks' = iterate (\x -> 6*sig/rank + x) (-3*sig)
+    ranks' = iterate (\x -> 6*sig/rank + x) (avg-3*sig)
     convert (ranks,fs) = (ranks,length' fs)
 
 --期待値のリスト
 mkExpected rank n = (\(s,e) -> n*(lowerDensity e - lowerDensity s))
 
 --X^2値を計算
-xSquare rank n rs = (+negate n).sum.map (\(f,e) -> f^2/e) $ zip fs es where
-    (ranks,fs) = unzip $ mkFrequency rank sig rs
+xSquare rank n rs param = (+negate n).sum.map (\(f,e) -> f^2/e) $ zip fs es where
+    (ranks,fs) = unzip $ mkFrequency rank param rs
     es = map (mkExpected rank n) ranks
 
 --事象の分割,数え上げ
@@ -60,3 +62,17 @@ probDensity k x = x**(k/2-1)*exp(-x/2)/2**(k/2) / gamma (k/2)
 gamma 0.5 = sqrt pi
 gamma 1 = 1
 gamma z = (z-1)*gamma (z-1)
+
+--検定
+assay :: Double -> Double -> [Double] -> (Bool,Double,Double)
+assay rank a xs = (x2 <= chi2 , x2 , chi2)  where
+    x2 = xSquare (rank-2-1) (length' xs) xs (avg,sig)
+    chi2 = fst.reverseArea a $ chiSquareGragh (rank-2)
+    avg = sum xs / length' xs
+    sig = (/length' xs).sum $ map (\x -> (x-avg)^2) xs
+
+data Calc a = On a | Finish a deriving (Ord,Eq,Show)
+
+reverseArea a = (\(Finish x) -> x). foldl f (On (0,0)).reverse.filter (\(_,y) -> y> 10**(-8)) where
+    f (Finish k) _ = Finish k
+    f (On (a,b)) (x,y) = if b+y < a*10 then On (x,b+y) else Finish (a,b)
