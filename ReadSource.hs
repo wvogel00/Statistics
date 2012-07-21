@@ -4,10 +4,12 @@ import Control.Applicative hiding ( (<|>) , many )
 import Text.Parsec
 import Text.Parsec.String
 
-run :: Parser [String] -> String -> IO [Int]
+length' = fromIntegral.length
+
+run :: Parser [String] -> String -> IO [Double]
 run p input = case (parse p "" input) of
     Left err -> print err >> return []
-    Right xs -> return $ map length xs
+    Right xs -> return $ map length' xs
 
 startRead :: Parser [String]
 startRead = do
