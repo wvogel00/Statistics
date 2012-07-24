@@ -56,6 +56,9 @@ lowerDensity x = (\(_,p,_)-> p+0.5) $ foldl f (t1,t1,t1) [3,5..200] where
     f (t,p,prev) i = (t*x^2/i,p+t*x^2/i,p)
     t1 = x*exp (-x^2/2) / sqrt (2*pi)
 
+--上側累積確率
+upperDensity x = 1 - lowerDensity x
+
 probDensity k x = x**(k/2-1)*exp(-x/2)/2**(k/2) / gamma (k/2)
 
 --ガンマ関数
@@ -64,15 +67,15 @@ gamma 1 = 1
 gamma z = (z-1)*gamma (z-1)
 
 --検定
-assay :: Double -> Double -> [Double] -> (Bool,Double,Double)
-assay rank a xs = (x2 <= chi2 , x2 , chi2)  where
-    x2 = xSquare (rank-2-1) (length' xs) xs (avg,sig)
-    chi2 = fst.reverseArea a $ chiSquareGragh (rank-2)
+assay :: Double -> [Double] -> (Bool,Double,Double)
+assay a xs = (a < prob , x2 , prob)  where
+    x2 = xSquare' (length' xs) xs (avg,sig)
+    prob = upperDensity x2
     avg = sum xs / length' xs
     sig = (/length' xs).sum $ map (\x -> (x-avg)^2) xs
 
-data Calc a = On a | Finish a deriving (Ord,Eq,Show)
-
-reverseArea a = (\(Finish x) -> x). foldl f (On (0,0)).reverse.filter (\(_,y) -> y> 10**(-8)) where
-    f (Finish k) _ = Finish k
-    f (On (a,b)) (x,y) = if b+y < a*10 then On (x,b+y) else Finish (a,b)
+--X^2値を計算(課題2)
+xSquare' n rs param = (+negate n).sum.map (\(f,e) -> f^2/e) $ zip fs es where
+    ranks = take (length fs) $ zip [0.5,1.5..] [1.5,2.5..]
+    fs = map length'.group $ sort rs
+    es = map (mkExpected (length' fs) n) ranks

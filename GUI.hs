@@ -17,7 +17,7 @@ mainGUI = do
   p <- panel f []
   txtN <- textEntry p [text := "10" , alignment := AlignRight]
   txtR <- textEntry p [text :=  "500" , alignment := AlignRight]
-  txtA <- textEntry p [text := "0.005"  , alignment := AlignRight]
+  txtA <- textEntry p [text := "0.05"  , alignment := AlignRight]
   draw <- button p [ text := "draw gragh"
                     ,on command := drawMode f
                     ,clientSize := sz 100 32]
@@ -47,7 +47,7 @@ simulateAssay f txtA txtN = do
     case file of
         Nothing -> infoDialog f "ERROR" "ファイルを選択してください"
         Just path -> readFile path >>= run startRead
-                        >>= showAssayed.assay rank a
+                        >>= showAssayed.assay a
 
 showAssayed :: (Bool,Double,Double) -> IO()
 showAssayed (b,x,chi) = do
