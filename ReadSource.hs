@@ -20,7 +20,8 @@ startRead = do
         Nothing -> return xs
 
 word :: Parser (Maybe String)
-word = (Just <$> (types <|> variables <|> number) ) <|>return  Nothing
+word = (Just <$> (try types <|> try variables <|> try number) )
+        <|>return  Nothing
 
 number :: Parser String
 number = try float <|> integer
@@ -42,7 +43,7 @@ variables = f <$> many (char '_') <*> many1 lower
 commentOrSpace :: Parser Char
 commentOrSpace = (try space <|> try literals <|>
                   try skipLine <|> skipBlock <|>
-                  noneOf efficients) where
+                   anyChar) where --noneOf efficients) where
     skipLine = string "--" *> line *> return 'l'
     skipBlock = string "{-" *> contents *> return 'b'
     line = skipMany (noneOf "\n") *> newline
